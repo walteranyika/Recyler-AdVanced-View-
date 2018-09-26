@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -14,14 +16,16 @@ import java.util.ArrayList;
  * Created by walter on 9/25/18.
  */
 
-public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHolder> {
+public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHolder>  implements Filterable {
 //https://guides.codepath.com/android/Using-the-RecyclerView
     Context context;
     ArrayList<User> arrayList;
+    ArrayList<User> displayList;
 
     public CustomAdapter(Context context, ArrayList<User> arrayList) {
         this.context = context;
         this.arrayList = arrayList;
+        this.displayList=arrayList;
     }
 
     @Override
@@ -32,7 +36,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHold
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        User u=arrayList.get(position);
+        User u=displayList.get(position);
         holder.cbComplete.setChecked(u.isComplete());
         holder.txtCourse.setText(u.getCourse());
         holder.txtCampus.setText(u.getCampus());
@@ -41,7 +45,39 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.MyViewHold
 
     @Override
     public int getItemCount() {
-        return arrayList.size();
+        return displayList.size();
+    }
+
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                FilterResults results=new FilterResults();
+                if (constraint==null || constraint.length()==0){
+                   results.values=arrayList;
+                   results.count=arrayList.size();
+                }else{
+                    ArrayList<User> filteredResults =new ArrayList<>();
+                    String search = constraint.toString().toLowerCase();
+                    for (User u:arrayList) {
+                        if(u.getName().toLowerCase().contains(search) || u.getCourse().toLowerCase().contains(search) || u.getCampus().toLowerCase().contains(search)){
+                           filteredResults.add(u);
+                        }
+                    }
+                    results.values = filteredResults;
+                    results.count= filteredResults.size();
+
+                }
+                return results;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                  displayList = (ArrayList<User>) results.values;
+                  notifyDataSetChanged();
+            }
+        };
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
